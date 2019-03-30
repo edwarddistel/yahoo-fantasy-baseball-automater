@@ -1,7 +1,23 @@
 const axios = require("axios");
+const fs = require('fs');
 const LEAGUE_AVERAGE = 0.249;
 
 exports.mlbComStats = {
+
+  existingPlayerIDs: {},
+  existingPlayerStats: {},
+
+  // Write to an external file to display output data
+  writeToFile (data, file, flag) {
+    if (flag === null) flag = `a`;
+    fs.writeFile(file, data, {flag: flag}, (err) => {
+      if (err) {
+        console.error(`Error in writing to ${file}: ${err}`);
+      }
+    });
+    return 1;
+  },
+
   // Asynchronous forEach function
   async asyncForEach(array, callback) {
     for (let index = 0; index < array.length; index++) {
@@ -74,19 +90,42 @@ exports.mlbComStats = {
     const myPitchersData = {};
     const opposingPitchersData = {};
 
+    // Try pulling MLBcom playerIDs from existing file; if not, create file for next time
+    const playerIDsFile = './playerIDs.json';
+    let playerIDs;
+    try {
+      if (fs.existsSync(playerIDsFile)) {
+        try {
+          playerIDs = JSON.parse(fs.readFileSync(playerIDsFile, 'utf8'));
+          Object.keys(playerIDs).forEach((key) => {
+            this.existingPlayerIDs[key] = playerIDs[key];
+          });
+        } catch (err) {
+            console.error(`Error parsing file ${playerIDsFile}: ${err}.\n`);
+        }
+      }
+    } catch(err) {
+      console.log(`No MLB.com playerID found, creating one.`);
+    }
+
+    // Get MLBcom stats for each player
     process.stdout.write(`Acquiring player statistics from MLB.com...`);
     await this.asyncForEach(myPlayers, async player => {
       process.stdout.write(`.`);
       const playerTeam = player.editorial_team_abbr.toUpperCase();
-      const year = 2018;
+
+      // If before May 1, get last year's stats; otherwise get this year's stats
+      const d = new Date();
+      const mayFirst = new Date(`5-1-${d.getFullYear()}`);
+      const year = d < mayFirst ? d.getFullYear()-1 : d.getFullYear();
+
       const playerName = player.name.ascii_first + " " + player.name.ascii_last;
 
-      const playerID = await this.playerID(playerName, playerTeam);
-      const playerStats = await this.playerStats(
-        playerID,
-        player.position_type,
-        year
-      );
+      // See if hitter's player ID and stats exist; if not, look them up, then store them
+      const playerID = this.existingPlayerIDs[player.player_key] ? this.existingPlayerIDs[player.player_key] : await this.playerID(playerName, playerTeam);
+      const playerStats = this.existingPlayerStats[playerID] ? this.existingPlayerStats[playerID] : await this.playerStats(playerID, player.position_type, year);
+      this.existingPlayerIDs[player.player_key] = playerID;
+      this.existingPlayerStats[playerID] = playerStats;
 
       let pitchersAverage = 0;
       let battingAverage = 0;
@@ -108,15 +147,13 @@ exports.mlbComStats = {
 
             // If the pitcher is announced
             if (opposingPitcher.pitcher !== "TBD") {
-              const oppPitchID = await this.playerID(
-                opposingPitcher.pitcher,
-                opposingPitcher.team
-              );
-              const oppPitchStats = await this.playerStats(
-                oppPitchID,
-                "P",
-                year
-              );
+
+              // See if opposing pitcher ID and stats exist; if not, look them up, then store them
+              const oppPitchID = this.existingPlayerIDs[opposingPitcher.pitcher+opposingPitcher.team] ? this.existingPlayerIDs[opposingPitcher.pitcher+opposingPitcher.team] :  await this.playerID(opposingPitcher.pitcher, opposingPitcher.team);
+              const oppPitchStats = this.existingPlayerStats[opposingPitcher.pitcher+opposingPitcher.team] ? this.existingPlayerStats[opposingPitcher.pitcher+opposingPitcher.team] : await this.playerStats(oppPitchID, "P", year);
+              this.existingPlayerIDs[opposingPitcher.pitcher+opposingPitcher.team] = oppPitchID;
+              this.existingPlayerStats[opposingPitcher.pitcher+opposingPitcher.team] = oppPitchStats;
+              
               if (oppPitchStats) {
                 if (Array.isArray(oppPitchStats)) {
                   oppPitchStats.forEach(team => {
@@ -175,6 +212,7 @@ exports.mlbComStats = {
       }
     });
     process.stdout.write("\n");
+    this.writeToFile(JSON.stringify(this.existingPlayerIDs), playerIDsFile, 'w');
 
     return { hitters: myHittersData, pitchers: myPitchersData };
   }

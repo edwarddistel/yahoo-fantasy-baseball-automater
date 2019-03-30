@@ -35,13 +35,13 @@ exports.yfbb = {
     user: function () { return `${this.YAHOO}/users;use_login=1/games`},
 
 
-    handleError: function(err, func) {
+    handleError (err, func) {
         const msg = err.response.data ? JSON.parse(parser.toJson(err.response.data)).error.description : "";
         console.error(`Error with credentials in ${func}(): ${err}, ${msg}`);
     },
 
     // Write to an external file to display output data
-    writeToFile: function (data, file, flag) {
+    writeToFile (data, file, flag) {
         if (flag === null) flag = `a`;
         fs.writeFile(file, data, {flag: flag}, (err) => {
             if (err) {
@@ -53,7 +53,7 @@ exports.yfbb = {
 
      
     // Read the Yahoo OAuth credentials file
-    readCredentials: async function () {
+    async readCredentials () {
         try {
             // If the credentials file exists
             if (fs.existsSync(CONFIG.AUTH_FILE)) {
@@ -78,7 +78,7 @@ exports.yfbb = {
     },   
 
     // If no yahoo.json file, initialize first authorization
-    getInitialAuthorization: function () {
+    getInitialAuthorization () {
         return axios({
             url: this.AUTH_ENDPOINT,
             method: 'post',
@@ -101,7 +101,7 @@ exports.yfbb = {
     },
 
     // If authorization token is stale, refresh it 
-    refreshAuthorizationToken: function (token) {
+    refreshAuthorizationToken (token) {
         return axios({
             url: this.AUTH_ENDPOINT,
             method: 'post',
@@ -122,7 +122,7 @@ exports.yfbb = {
     },
 
     // Hit the Yahoo Fantasy API
-    makeAPIrequest: async function (url) {
+    async makeAPIrequest (url) {
         let response;
         try {
             response = await axios({
@@ -155,7 +155,7 @@ exports.yfbb = {
 
 
     // Get a list of free agents
-    getFreeAgents: async function () {
+    async getFreeAgents () {
         try {
             const results = await this.makeAPIrequest(this.freeAgents());
             return results.fantasy_content.league.players
@@ -166,7 +166,7 @@ exports.yfbb = {
     },
 
     // Get a list of players on my team
-    getMyPlayers: async function () {
+    async getMyPlayers () {
         try {
             const results = await this.makeAPIrequest(this.myTeam());
             return results.fantasy_content.team.roster.players.player;    
@@ -176,7 +176,7 @@ exports.yfbb = {
     },
 
     // Get my weekly stats
-    getMyWeeklyStats: async function ()  {
+    async getMyWeeklyStats ()  {
         try {
             const results = await this.makeAPIrequest(this.myWeeklyStats());
             return results.fantasy_content.team.team_stats.stats.stat;    
@@ -186,7 +186,7 @@ exports.yfbb = {
     },
 
     // Get my scoreboard
-    getMyScoreboard: async function ()  {
+    async getMyScoreboard ()  {
         try {
             const results = await this.makeAPIrequest(this.scoreboard());
             return results.fantasy_content.league.scoreboard.matchups.matchup;
@@ -196,7 +196,7 @@ exports.yfbb = {
     },
     
     // Get a JSON object of your players
-    getMyPlayersStats: async function () {
+    async getMyPlayersStats () {
         try {
             const players = await this.getMyPlayers(this.myTeam());
 
@@ -221,7 +221,7 @@ exports.yfbb = {
     },
 
     // Get what week it is in the season
-    getCurrentWeek: async function() {
+    async getCurrentWeek () {
         try {
             const results = await this.makeAPIrequest(this.metadata());
             return results.fantasy_content.league.current_week;
@@ -231,7 +231,7 @@ exports.yfbb = {
     },
 
     // Get the numerical prefix for the league. Was 388 in 2019
-    getLeaguePrefix: async function () {
+    async getLeaguePrefix () {
         try {
             const results = await this.makeAPIrequest(this.gameKey());
             return results.fantasy_content.game.game_id;    
@@ -262,7 +262,7 @@ exports.yfbb = {
     },
 
     // Get stats IDs
-    getStatsIDs: async function () {
+    async getStatsIDs  () {
         try {
             const results = await this.makeAPIrequest(this.statsID());
             return results.fantasy_content.game.stat_categories.stats;    
@@ -272,7 +272,7 @@ exports.yfbb = {
     },
 
     // See who's starting on your team
-    getCurrentRoster: async function () {
+    async getCurrentRoster () {
         try {
             const results = await this.makeAPIrequest(this.roster());
             return results.fantasy_content.team.roster.players;    
@@ -282,7 +282,7 @@ exports.yfbb = {
     },
     
     // Look up an individual player
-    getPlayer: async function (player) {
+    async getPlayer (player) {
         try {
             const results = await this.makeAPIrequest(this.playerSearch() + player);
             return results.fantasy_content.league.players.player.player_key;
@@ -292,7 +292,7 @@ exports.yfbb = {
     },
 
     // Look up player stats
-    getPlayerStats: async function (playerKey) {
+    async getPlayerStats (playerKey) {
         try {
             const results = await this.makeAPIrequest(this.playerStats().replace('player_key', playerKey));
             return results.fantasy_content;
@@ -302,7 +302,7 @@ exports.yfbb = {
     },
 
     // Tell Yahoo which players are playing
-    updateRoster: async function (payload) {
+    async updateRoster (payload) {
 
         let response;
 

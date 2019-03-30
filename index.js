@@ -5,12 +5,7 @@ const yahoo = require('./yahooFantasyBaseball');
 const probables = require('./probables');
 const roster = require('./roster-management');
 
-
-/**
- *
- *
- */
-const getData = async() => {
+const getData = async(i) => {
     try {
         // Read credentials file or get new authorization token
         await yahoo.yfbb.readCredentials();
@@ -18,33 +13,72 @@ const getData = async() => {
         // If crededentials exist
         if (yahoo.yfbb.CREDENTIALS) {
 
+        const targetDay = new Array(i);
+        const yahooDay = new Array(i);
+        const pitchers = new Array(i);
+        const myPlayers = new Array(i);
+        const playersStats = new Array(i);
+        const updatedRoster = new Array(i);
+        const yahooXML = new Array(i);
+        const yahooResponse = new Array(i);
+        const todaysRoster = new Array(i);
+        const playersByPos = new Array(i);
+
+        todaysRoster[i] = {
+            C: null,
+            FB: null,
+            SB: null,
+            TB: null,
+            SS: null,
+            CI: null,
+            OF1: null,
+            OF2: null,
+            OF3: null,
+            UT1: null,
+            UT2: null,
+            IL: [],
+            BN: []
+          };
+        
+        playersByPos[i] = {
+            C: [],
+            FB: [],
+            SB: [],
+            TB: [],
+            SS: [],
+            CI: [],
+            OF: [],
+            UT: [],
+            IL: [],
+            BN: []
+          };
 
         const d = new Date();
-        const howFarAhead = 1;
+        const howFarAhead = i;
         d.setDate(d.getDate() + howFarAhead);
-        const targetDay = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-        const yahooDay = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;;
+        targetDay[i] = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+        yahooDay[i] = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;;
 
-        console.log(`Targeting ${targetDay}`);
+        console.log(`Targeting ${targetDay[i]}`);
 
         console.log(`Getting probable pitchers...`);
-        const pitchers = await probables.mlbPitchers.getProbablePitchers(targetDay);
+        pitchers[i] = await probables.mlbPitchers.getProbablePitchers(targetDay[i]);
 
         console.log(`Getting my players...`);
-        const myPlayers = await yahoo.yfbb.getMyPlayers();
+        myPlayers[i] = await yahoo.yfbb.getMyPlayers();
 
         console.log(`Getting stats...`)
-        const playersStats = await stats.mlbComStats.calculateStats(pitchers, myPlayers);
+        playersStats[i] = await stats.mlbComStats.calculateStats(pitchers[i], myPlayers[i]);
 
         console.log(`Analyzing roster...`)
-        const updatedRoster = await roster.rosterManagement.sortPlayers(playersStats);
+        updatedRoster[i] = await roster.rosterManagement.sortPlayers(playersStats[i], todaysRoster[i], playersByPos[i]);
 
         console.log(`Building roster...`);
-        const yahooXML = await roster.rosterManagement.buildRoster(updatedRoster, yahooDay);
+        yahooXML[i] = await roster.rosterManagement.buildRoster(updatedRoster[i], yahooDay[i], todaysRoster[i], playersByPos[i]);
 
         console.log(`Sending to Yahoo...`);
-        const yahooResponse = await yahoo.yfbb.updateRoster(yahooXML);
-        console.log(`Yahoo response: ${yahooResponse.fantasy_content.confirmation.status}`);
+        yahooResponse[i] = await yahoo.yfbb.updateRoster(yahooXML[i]);
+        console.log(`Yahoo response: ${yahooResponse[i].fantasy_content.confirmation.status}`);
         
 
         }
@@ -55,7 +89,15 @@ const getData = async() => {
 };
 
 
-getData();
+const loop = async () => {
+    for (let i = 1; i <5; i++) {
+        global.firstPass = true;
+        await getData(i);
+        global.firstPass = false;
+    }
+};
+
+loop();
 
 
 /** 

@@ -45,99 +45,53 @@ exports.rosterManagement = {
     }
   },
 
-  roster: {
-    C: null,
-    FB: null,
-    SB: null,
-    TB: null,
-    SS: null,
-    CI: null,
-    OF1: null,
-    OF2: null,
-    OF3: null,
-    UT1: null,
-    UT2: null,
-    IL: [],
-    BN: []
-  },
-
-  playersByPos: {
-    C: [],
-    FB: [],
-    SB: [],
-    TB: [],
-    SS: [],
-    CI: [],
-    OF: [],
-    UT: [],
-    IL: [],
-    BN: []
-  },
-
   // Look at eligible display positions and slot players accordingly, then run firstPass
-  sortPlayers(players) {
-    Object.values(players.hitters).forEach((player, i) => {
+  sortPlayers(players, roster, playersByPos) {
+    Object.values(players.hitters).forEach((player) => {
       const positions = player.position.split(",");
       if (player.status && (player.status === "DL10")) {
-        this.playersByPos["IL"].push(player);
+        playersByPos["IL"].push(player);
       } else if (player.status || player.logFive === "NO GAME") {
-        this.playersByPos["BN"].push(player);
+        playersByPos["BN"].push(player);
       } else {
-        this.playersByPos["UT"].push(player);
+        playersByPos["UT"].push(player);
         positions.forEach(position => {
           const posFormatted = this.convertPositionFormat(position);
-          this.playersByPos[posFormatted].push(player);
+          playersByPos[posFormatted].push(player);
           if (posFormatted === "FB" || posFormatted === "TB")
-            this.playersByPos["CI"].push(player);
+            playersByPos["CI"].push(player);
         });
       }
     });
 
-    return this.firstPass();
+    return this.firstPass(roster, playersByPos);
   },
 
   // First, slot in players who only have a single display position
-  firstPass() {
-    const pos = [
-      "C",
-      "FB",
-      "SB",
-      "TB",
-      "SS",
-      "CI",
-      "OF1",
-      "OF2",
-      "OF3",
-      "UT1",
-      "UT2"
-    ];
+  firstPass(roster, playersByPos) {
+    const pos = ["C","FB","SB","TB","SS","CI","OF1","OF2","OF3","UT1","UT2"];
 
     for (let i = 0; i < pos.length; i++) {
       const convertedOFs = this.outfieldConvert(pos[i]);
 
-      if (
-        this.roster[pos[i]] === null &&
-        this.playersByPos[convertedOFs].length > 0
-      ) {
-        const playerIndex = this.setSinglePosPlayer(
-          this.playersByPos[convertedOFs]
-        );
-        const player = this.playersByPos[convertedOFs][playerIndex];
-        this.roster[pos[i]] = player;
-        this.playersByPos = this.findAndRemovePlayerFromArrays(
-          player,
-          this.playersByPos
-        );
+      if (roster[pos[i]] === null && playersByPos[convertedOFs].length > 0) {
+        const playerIndex = this.setSinglePosPlayer(playersByPos[convertedOFs]);
+        const player = playersByPos[convertedOFs][playerIndex];
+        playersByPos = this.findAndRemovePlayerFromArrays(player, playersByPos);
+        roster[pos[i]] = player;
       }
     }
 
-    return this.secondPass();
+    return this.secondPass(roster, playersByPos);
   },
 
   // Now go back and replace swap out starters with bench players who have a higher log5
-  secondPass() {
-    const bench = this.playersByPos["UT"];
-    const uts = ["UT1", "UT2"];
+  secondPass(roster, playersByPos) {
+    const bench = playersByPos["UT"];
+
+
+
+
     bench.forEach(player => {
       if (player.logFive !== "NO GAME") {
         const positions = player.position.split(",");
@@ -145,74 +99,84 @@ exports.rosterManagement = {
           const formattedPos = this.convertPositionFormat(position);
           if (formattedPos === "OF") {
             for (let i = 1; i < 4; i++) {
-              this.compareReplace(player, "OF" + i);
+              const updated = this.compareReplace(player, "OF" + i, roster, playersByPos);
+              roster = updated[0];
+              playersByPos = updated[1];
             }
           } else {
-            this.compareReplace(player, formattedPos);
+            const updated = this.compareReplace(player, formattedPos, roster, playersByPos);
+            roster = updated[0];
+            playersByPos = updated[1];
           }
         });
       }
     });
 
+
+
+    const uts = ["UT1", "UT2"];
     uts.forEach(ut => {
-      const benchTwo = this.playersByPos["BN"];
+      const benchTwo = playersByPos["BN"];
       benchTwo.forEach(player => {
-        if (player.logFive !== "NO GAME") this.compareReplace(player, ut);
+        if (player.logFive !== "NO GAME") {
+          const updated = this.compareReplace(player, ut, roster, playersByPos);
+          roster = updated[0];
+          playersByPos = updated[1];
+        }
       });
     });
+    
+
 
     // Put IL players on IL
-    this.playersByPos["IL"].forEach(player => {
-      this.roster["IL"].push(player);
+    playersByPos["IL"].forEach(player => {
+      roster["IL"].push(player);
     });
 
-
     // Put all remaining players on the bench
-    Object.values(this.playersByPos).forEach((pos) => {
+    Object.values(playersByPos).forEach((pos) => {
       if (pos) {
         if (Array.isArray(pos)) {
           pos.forEach((player) => {
+              playersByPos = this.findAndRemovePlayerFromArrays(player, playersByPos);
+              roster["BN"].push(player);
 
-              this.roster["BN"].push(player);
-              this.findAndRemovePlayerFromArrays(player, this.playersByPos);
           });
         } else {
-          this.roster["BN"].push(pos);
-              this.findAndRemovePlayerFromArrays(pos, this.playersByPos);
-        }
+          playersByPos = this.findAndRemovePlayerFromArrays(pos, playersByPos);
+          roster["BN"].push(pos);
+        } 
       }
     });
 
-    return this.roster;
+    return roster;
   },
 
   // Compare two players, swap the starter if challenger has a higher logFive; put other guy back on bench
-  compareReplace(player, pos) {
-    if (!this.checkIfStarting(player)) {
-      const starter = this.roster[pos];
+  compareReplace(player, pos, roster, playersByPos) {
+    if (!this.checkIfStarting(player, roster)) {
+      const starter = roster[pos];
       let winner;
       if (starter) {
         winner = player.logFive > starter.logFive ? player : starter;
         if (winner.name !== starter.name) {
-          this.playersByPos["BN"].push(starter);
-          this.roster[pos] = winner;
-          this.findAndRemovePlayerFromArrays(winner, this.playersByPos);
+          playersByPos = this.findAndRemovePlayerFromArrays(winner, playersByPos);
+          roster[pos] = winner;
+          playersByPos["BN"].push(starter);
         }
-      } else {
-        winner = player;
-        this.findAndRemovePlayerFromArrays(winner, this.playersByPos);
-      }
+      } 
     }
+    return [roster, playersByPos];
   },
 
-  checkIfStarting(player) {
+  checkIfStarting(player, roster) {
     let needle = false;
 
-    Object.keys(this.roster).forEach(pos => {
+    Object.keys(roster).forEach(pos => {
       if (
-        this.roster[pos] &&
-        this.roster[pos].name &&
-        this.roster[pos].name === player.name
+        roster[pos] &&
+        roster[pos].name &&
+        roster[pos].name === player.name
       )
         needle = true;
     });
@@ -220,11 +184,11 @@ exports.rosterManagement = {
   },
 
   // Remove a player from the list of available players in this.playerByPos
-  findAndRemovePlayerFromArrays(player, arr) {
-    for (var pos in arr) {
-      arr[pos] = arr[pos].filter(el => el.name !== player.name);
+  findAndRemovePlayerFromArrays(player, playersByPos) {
+    for (const pos in playersByPos) {
+      playersByPos[pos] = playersByPos[pos].filter(el => el.name !== player.name);
     }
-    return arr;
+    return playersByPos;
   },
 
   // Return the index of the first player for that position who ONLY plays that position, or return the first player in the list

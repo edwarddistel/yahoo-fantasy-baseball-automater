@@ -90,7 +90,8 @@ const getData = async(i) => {
 
 
 const loop = async () => {
-    for (let i = 1; i <5; i++) {
+    const t = new Date();
+    for (let i = 0; i <5; i++) {
         global.firstPass = true;
         await getData(i);
         global.firstPass = false;

@@ -158,7 +158,7 @@ exports.rosterManagement = {
       const starter = roster[pos];
       let winner;
       if (starter) {
-        winner = player.logFive > starter.logFive ? player : starter;
+        winner = (player.logFive > starter.logFive) && (!player.status) ? player : starter;
         if (winner.name !== starter.name) {
           playersByPos = this.findAndRemovePlayerFromArrays(winner, playersByPos);
           roster[pos] = winner;

@@ -104,5 +104,12 @@ exports.mlbPitchers = {
         this.formatResults(result, callback);
       }
     });
+  },
+
+  getFirstGame(day, callback) {
+    const url = ``;
+    const selector = {
+      
+    }
   }
 };

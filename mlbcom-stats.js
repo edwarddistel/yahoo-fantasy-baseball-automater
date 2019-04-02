@@ -132,10 +132,10 @@ exports.mlbComStats = {
       if (player.position_type === "B") {
         if (Array.isArray(playerStats)) {
           playerStats.forEach(team => {
-            battingAverage += parseFloat(team.avg, 10);
+            battingAverage += parseFloat(team.babip, 10);
           });
         } else {
-          battingAverage = playerStats.avg;
+          battingAverage = playerStats.babip;
         }
 
         if (opposingPitchersData[playerTeam])
@@ -157,11 +157,11 @@ exports.mlbComStats = {
               if (oppPitchStats) {
                 if (Array.isArray(oppPitchStats)) {
                   oppPitchStats.forEach(team => {
-                    pitchersAverage += parseFloat(team.avg);
+                    pitchersAverage += parseFloat(team.babip);
                   });
                   pitchersAverage = pitchersAverage / oppPitchStats.length;
                 } else {
-                  pitchersAverage = oppPitchStats.avg;
+                  pitchersAverage = oppPitchStats.babip;
                 }
                 opposingPitchersData[playerTeam] = pitchersAverage.toString();
               } else {

@@ -49,7 +49,7 @@ exports.rosterManagement = {
   sortPlayers(players, roster, playersByPos) {
     Object.values(players.hitters).forEach((player) => {
       const positions = player.position.split(",");
-      if (player.status && (player.status === "DL10")) {
+      if (player.status && (player.status.substr(0,2).includes("DL"))) {
         playersByPos["IL"].push(player);
       } else if (player.status || player.logFive === "NO GAME") {
         playersByPos["BN"].push(player);

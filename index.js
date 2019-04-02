@@ -9,22 +9,22 @@ const getData = async(i) => {
     try {
         // Read credentials file or get new authorization token
         await yahoo.yfbb.readCredentials();
-        
+
         // If crededentials exist
         if (yahoo.yfbb.CREDENTIALS) {
 
-        const targetDay = new Array(i);
-        const yahooDay = new Array(i);
-        const pitchers = new Array(i);
-        const myPlayers = new Array(i);
-        const playersStats = new Array(i);
-        const updatedRoster = new Array(i);
-        const yahooXML = new Array(i);
-        const yahooResponse = new Array(i);
-        const todaysRoster = new Array(i);
-        const playersByPos = new Array(i);
+            const targetDay = new Array(i);
+            const yahooDay = new Array(i);
+            const pitchers = new Array(i);
+            const myPlayers = new Array(i);
+            const playersStats = new Array(i);
+            const updatedRoster = new Array(i);
+            const yahooXML = new Array(i);
+            const yahooResponse = new Array(i);
+            const todaysRoster = new Array(i);
+            const playersByPos = new Array(i);
 
-        todaysRoster[i] = {
+            todaysRoster[i] = {
             C: null,
             FB: null,
             SB: null,
@@ -38,9 +38,9 @@ const getData = async(i) => {
             UT2: null,
             IL: [],
             BN: []
-          };
-        
-        playersByPos[i] = {
+            };
+
+            playersByPos[i] = {
             C: [],
             FB: [],
             SB: [],
@@ -51,36 +51,36 @@ const getData = async(i) => {
             UT: [],
             IL: [],
             BN: []
-          };
+            };
 
-        const d = new Date();
-        const howFarAhead = i;
-        d.setDate(d.getDate() + howFarAhead);
-        targetDay[i] = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
-        yahooDay[i] = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;;
+            // Get the target date, format it for Yahoo
+            const d = new Date();
+            const howFarAhead = i;
+            d.setDate(d.getDate() + howFarAhead);
+            targetDay[i] = `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+            yahooDay[i] = `${d.getFullYear()}-${("0" + (d.getMonth() + 1)).slice(-2)}-${("0" + d.getDate()).slice(-2)}`;;
 
-        console.log(`Targeting ${targetDay[i]}`);
+            console.log(`Targeting ${targetDay[i]}`);
 
-        console.log(`Getting probable pitchers...`);
-        pitchers[i] = await probables.mlbPitchers.getProbablePitchers(targetDay[i]);
+            console.log(`Getting probable pitchers...`);
+            pitchers[i] = await probables.mlbPitchers.getProbablePitchers(targetDay[i]);
 
-        console.log(`Getting my players...`);
-        myPlayers[i] = await yahoo.yfbb.getMyPlayers();
+            console.log(`Getting my players...`);
+            myPlayers[i] = await yahoo.yfbb.getMyPlayers();
 
-        console.log(`Getting stats...`)
-        playersStats[i] = await stats.mlbComStats.calculateStats(pitchers[i], myPlayers[i]);
+            console.log(`Getting stats...`)
+            playersStats[i] = await stats.mlbComStats.calculateStats(pitchers[i], myPlayers[i]);
 
-        console.log(`Analyzing roster...`)
-        updatedRoster[i] = await roster.rosterManagement.sortPlayers(playersStats[i], todaysRoster[i], playersByPos[i]);
+            console.log(`Analyzing roster...`)
+            updatedRoster[i] = await roster.rosterManagement.sortPlayers(playersStats[i], todaysRoster[i], playersByPos[i]);
 
-        console.log(`Building roster...`);
-        yahooXML[i] = await roster.rosterManagement.buildRoster(updatedRoster[i], yahooDay[i], todaysRoster[i], playersByPos[i]);
+            console.log(`Building roster...`);
+            yahooXML[i] = await roster.rosterManagement.buildRoster(updatedRoster[i], yahooDay[i], todaysRoster[i], playersByPos[i]);
 
-        console.log(`Sending to Yahoo...`);
-        yahooResponse[i] = await yahoo.yfbb.updateRoster(yahooXML[i]);
-        console.log(`Yahoo response: ${yahooResponse[i].fantasy_content.confirmation.status}`);
-        
+            console.log(`Sending to Yahoo...`);
+            yahooResponse[i] = await yahoo.yfbb.updateRoster(yahooXML[i]);
 
+            console.log(`Yahoo response: ${yahooResponse[i].fantasy_content.confirmation.status}`);
         }
     } catch (err) {
         console.error(`Error in getData(): ${err}`);
@@ -88,7 +88,7 @@ const getData = async(i) => {
 
 };
 
-
+// Loop the roster decisions over a period of 5 days
 const loop = async () => {
     const t = new Date();
     for (let i = 0; i <5; i++) {

@@ -139,12 +139,12 @@ exports.rosterManagement = {
         if (Array.isArray(pos)) {
           pos.forEach((player) => {
               playersByPos = this.findAndRemovePlayerFromArrays(player, playersByPos);
-              roster["BN"].push(player);
+              if (!player.status) roster["BN"].push(player);
 
           });
         } else {
           playersByPos = this.findAndRemovePlayerFromArrays(pos, playersByPos);
-          roster["BN"].push(pos);
+          if (!player.status) roster["BN"].push(pos);
         } 
       }
     });

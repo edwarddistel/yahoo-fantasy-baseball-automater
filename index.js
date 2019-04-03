@@ -1,5 +1,3 @@
-const fs = require('fs');
-
 const stats = require('./mlbcom-stats');
 const yahoo = require('./yahooFantasyBaseball');
 const probables = require('./probables');

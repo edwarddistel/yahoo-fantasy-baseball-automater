@@ -141,14 +141,12 @@ exports.rosterManagement = {
         if (Array.isArray(pos)) {
           pos.forEach((player) => {
               playersByPos = this.findAndRemovePlayerFromArrays(player, playersByPos);
-              const dl = player.status && player.status.includes('DL');
-              if (!dl) roster["BN"].push(player);
+              roster["BN"].push(player);
 
           });
         } else {
           playersByPos = this.findAndRemovePlayerFromArrays(pos, playersByPos);
-          const dl = player.status && player.status.includes('DL');
-          if (!dl) roster["BN"].push(pos);
+          roster["BN"].push(pos);
         } 
       }
     });
@@ -158,9 +156,13 @@ exports.rosterManagement = {
       if (!roster[pos] && roster['BN']) {
         const formattedPos = this.convertPositionFormat(pos);
         Object.values(roster['BN']).forEach((player) => {
-          if (player.position.includes(formattedPos) || pos.includes('UT')) {
+          console.log(player.name, player.logFive !== "NO GAME", player.position.includes(formattedPos), pos.includes('UT'));
+          if ((player.logFive !== "NO GAME") && (player.position.includes(formattedPos) || pos.includes('UT'))) {
             roster[pos] = player;
-            this.findAndRemovePlayerFromArrays(player, playersByPos);
+            console.log(roster['BN'].filter(el => el.name !== player.name));
+            const newBench = roster['BN'].filter(el => el.name !== player.name);
+            roster['BN'].length = 0;
+            roster['BN'] = newBench.slice();
           }
         });
       }

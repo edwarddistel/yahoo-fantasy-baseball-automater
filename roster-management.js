@@ -22,6 +22,11 @@ exports.rosterManagement = {
       case "TB":
         return "3B";
         break;
+      case "OF1":
+      case "OF2":
+      case "OF3":
+        return "OF";
+        break;        
       default:
         return pos;
         break;
@@ -89,9 +94,6 @@ exports.rosterManagement = {
   secondPass(roster, playersByPos) {
     const bench = playersByPos["UT"];
 
-
-
-
     bench.forEach(player => {
       if (player.logFive !== "NO GAME") {
         const positions = player.position.split(",");
@@ -150,6 +152,19 @@ exports.rosterManagement = {
         } 
       }
     });
+
+    // Check to make sure no spot is empty. If a spot is empty, put in a player who might be day-to-day
+    for (const pos in roster) {
+      if (!roster[pos] && roster['BN']) {
+        const formattedPos = this.convertPositionFormat(pos);
+        Object.values(roster['BN']).forEach((player) => {
+          if (player.position.includes(formattedPos) || pos.includes('UT')) {
+            roster[pos] = player;
+            this.findAndRemovePlayerFromArrays(player, playersByPos);
+          }
+        });
+      }
+    }
 
     return roster;
   },

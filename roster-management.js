@@ -156,10 +156,8 @@ exports.rosterManagement = {
       if (!roster[pos] && roster['BN']) {
         const formattedPos = this.convertPositionFormat(pos);
         Object.values(roster['BN']).forEach((player) => {
-          console.log(player.name, player.logFive !== "NO GAME", player.position.includes(formattedPos), pos.includes('UT'));
           if ((player.logFive !== "NO GAME") && (player.position.includes(formattedPos) || pos.includes('UT'))) {
             roster[pos] = player;
-            console.log(roster['BN'].filter(el => el.name !== player.name));
             const newBench = roster['BN'].filter(el => el.name !== player.name);
             roster['BN'].length = 0;
             roster['BN'] = newBench.slice();

@@ -133,6 +133,7 @@ exports.rosterManagement = {
     // Put IL players on IL
     playersByPos["IL"].forEach(player => {
       roster["IL"].push(player);
+      playersByPos = this.findAndRemovePlayerFromArrays(player, playersByPos);
     });
 
     // Put all remaining players on the bench

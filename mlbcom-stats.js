@@ -116,7 +116,7 @@ exports.mlbComStats = {
 
       // If before May 1, get last year's stats; otherwise get this year's stats
       const d = new Date();
-      const mayFirst = new Date(`5-1-${d.getFullYear()}`);
+      const mayFirst = new Date(`4-5-${d.getFullYear()}`);
       const year = d < mayFirst ? d.getFullYear()-1 : d.getFullYear();
 
       const playerName = player.name.ascii_first + " " + player.name.ascii_last;

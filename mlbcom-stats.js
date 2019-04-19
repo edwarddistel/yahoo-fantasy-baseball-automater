@@ -131,7 +131,7 @@ exports.mlbComStats = {
       let battingAverage = 0;
       if (player.position_type === "B") {
 
-        if (playerStats === 'undefined') {
+        if (playerStats.ba === 'undefined') {
           console.log(`\nNo stats for ${playerName} for ${year} from MLB.com API.`);
           battingAverage = LEAGUE_AVERAGE;
         }

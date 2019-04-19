@@ -131,16 +131,16 @@ exports.mlbComStats = {
       let battingAverage = 0;
       if (player.position_type === "B") {
 
-        if (playerStats) {
-          console.log(`No stats for ${playerName} for ${year} from MLB.com API.`);
+        if (playerStats.length === 0) {
+          console.log(`\nNo stats for ${playerName} for ${year} from MLB.com API.`);
           battingAverage = LEAGUE_AVERAGE;
         }
         else if (Array.isArray(playerStats)) {
           playerStats.forEach(team => {
-            battingAverage += parseFloat(team.ops, 10);
+            battingAverage += parseFloat(team.ba, 10);
           });
         } else {
-          battingAverage = playerStats.ops;
+          battingAverage = playerStats.ba;
         }
 
         if (opposingPitchersData[playerTeam])

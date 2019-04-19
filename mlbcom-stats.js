@@ -137,7 +137,11 @@ exports.mlbComStats = {
         }
         else if (Array.isArray(playerStats)) {
           playerStats.forEach(team => {
-            battingAverage += parseFloat(team.ba, 10);
+            if (team.ba === 'undefined') {
+              console.log(`\nNo stats for ${playerName} for ${year} from MLB.com API.`);
+              battingAverage += LEAGUE_AVERAGE;
+            }
+            else battingAverage += parseFloat(team.ba, 10);
           });
         } else {
           battingAverage = playerStats.ba;

@@ -35,20 +35,23 @@ exports.mlbComStats = {
   // Look up the MLB.com player ID via a player name and team
   async playerID(name, team) {
     const url = `http://lookup-service-prod.mlb.com/json/named.search_player_all.bam?sport_code=%27mlb%27&active_sw=%27Y%27&name_part=%27${encodeURIComponent(name.toLowerCase())}%25%27`;
-    console.log(url);
+ 
     try {
       const response = await axios.get(url);
       const results = response.data.search_player_all.queryResults.row;
-      var player_id = null;
+      var playerID = null;
       // If multiple players with the same name, check team affiliation
+      console.log(results.length, name);
       if (results && results.length > 1) {
         results.forEach(player => {
-          if (player.team_abbrev === team) player_id = player.player_id;
+          if (player.team_abbrev === team) playerID = player.player_id;
         });
       } else {
-        player_id = response.data.search_player_all.queryResults.row.player_id;
+        console.log(results);
+        playerID = response.data.search_player_all.queryResults.row.player_id;
       }
-      return player_id;
+      if (!playerID) console.log(`No player ID for ${name}, ${team}.`);
+      return playerID;
     } catch (error) {
       console.error(`Error in MLB PlayerID lookup: ${error}`);
     }

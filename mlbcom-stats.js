@@ -41,7 +41,6 @@ exports.mlbComStats = {
       const results = response.data.search_player_all.queryResults.row;
       var playerID = null;
       // If multiple players with the same name, check team affiliation
-      console.log(results.length, name);
       if (results && results.length > 1) {
         results.forEach(player => {
           if (player.team_abbrev === team) playerID = player.player_id;
@@ -49,7 +48,6 @@ exports.mlbComStats = {
       } else {
         playerID = response.data.search_player_all.queryResults.row.player_id;
       }
-      if (!playerID) console.log(`No player ID for ${name}, ${team}.`);
       return playerID;
     } catch (error) {
       console.error(`Error in MLB PlayerID lookup: ${error}`);
@@ -131,20 +129,20 @@ exports.mlbComStats = {
       let battingAverage = 0;
       if (player.position_type === "B") {
 
-        if (playerStats.ba === 'undefined') {
+        if (playerStats.avg === 'undefined') {
           console.log(`\nNo stats for ${playerName} for ${year} from MLB.com API.`);
           battingAverage = LEAGUE_AVERAGE;
         }
         else if (Array.isArray(playerStats)) {
           playerStats.forEach(team => {
-            if (team.ba === 'undefined') {
+            if (team.avg === 'undefined') {
               console.log(`\nNo stats for ${playerName} for ${year} from MLB.com API.`);
               battingAverage += LEAGUE_AVERAGE;
             }
-            else battingAverage += parseFloat(team.ba, 10);
+            else battingAverage += parseFloat(team.avg, 10);
           });
         } else {
-          battingAverage = playerStats.ba;
+          battingAverage = playerStats.avg;
         }
 
         if (opposingPitchersData[playerTeam])

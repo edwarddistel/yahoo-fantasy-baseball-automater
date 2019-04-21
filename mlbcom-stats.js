@@ -47,7 +47,6 @@ exports.mlbComStats = {
           if (player.team_abbrev === team) playerID = player.player_id;
         });
       } else {
-        console.log(results);
         playerID = response.data.search_player_all.queryResults.row.player_id;
       }
       if (!playerID) console.log(`No player ID for ${name}, ${team}.`);

@@ -131,18 +131,10 @@ exports.mlbComStats = {
 
         if (Array.isArray(playerStats)) {
           playerStats.forEach(team => {
-            if (team.avg === 'undefined') {
-              console.log(`\nNo stats for ${playerName} for ${year} from MLB.com API.`);
-              battingAverage += LEAGUE_AVERAGE;
-            }
-            else battingAverage += parseFloat(team.avg, 10);
+              battingAverage += team ? parseFloat(team.avg, 10) : LEAGUE_AVERAGE; 
           });
         } else {
-          if (playerStats.avg === 'undefined') {
-            console.log(`\nNo stats for ${playerName} for ${year} from MLB.com API.`);
-            battingAverage = LEAGUE_AVERAGE;
-          }
-          else battingAverage = playerStats.avg;
+            battingAverage = playerStats ? playerStats.avg : LEAGUE_AVERAGE;
         }
 
         if (opposingPitchersData[playerTeam])

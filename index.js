@@ -89,7 +89,7 @@ const getData = async(i) => {
 // Loop the roster decisions over a period of 5 days
 const loop = async () => {
     const t = new Date();
-    for (let i = 1; i <2; i++) {
+    for (let i = 0; i <5; i++) {
         global.firstPass = true;
         await getData(i);
         global.firstPass = false;

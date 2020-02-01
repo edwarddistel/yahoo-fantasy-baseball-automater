@@ -6,15 +6,22 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/edwarddistel/yahoo-fantasy-baseball-automater"
+  },
   "keywords": [],
   "author": "Edward Distel",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.18.0",
+    "axios": "^0.19.2",
     "js2xmlparser": "^4.0.0",
     "parser": "^0.1.4",
-    "qs": "^6.7.0",
-    "x-ray": "^2.3.3",
-    "xml2json": "^0.11.2"
+    "qs": "^6.9.1",
+    "x-ray": "^2.3.4",
+    "xml2json": "^0.12.0"
+  },
+  "devDependencies": {
+    "npm-check-updates": "^4.0.1"
   }
 }

@@ -2,6 +2,8 @@
 
 This tool automates your starting lineup for Yahoo Fantasy Baseball. 
 
+For a simpler app that just pulls in the raw data, and a more complete walkthrough on how to get the correct authorization codes from Yahoo, see my [Yahoo Fantasy Baseball Reade](https://github.com/edwarddistel/yahoo-fantasy-baseball-reader).
+
 ## Installation
 
 ### Part 1: Get access codes from Yahoo
@@ -44,12 +46,12 @@ https://api.login.yahoo.com/oauth2/request_auth?client_id=YOUR-CLIENT-ID-GOES-HE
         - E.g.: `398.l.123456`
         - To find out this number:
             - If it's 2020, the unique prefix for MLB is `398`. 
-            - If it's not 2019 you can find out the league prefix by replacing `index.js` with this:
+            - You can find out the league prefix by running:
             ```
             npm run league-prefix
             ```
             - You can find your league ID simply by logging into the Yahoo Fantasy Baseball website - it'll be the value after `https://baseball.fantasysports.yahoo.com/b1/`
-            - Combine those two with ".l." for a final format of `388.l.123456`
+            - Combine those two with ".l." for a final format of `398.l.123456`
     - `TEAM`: This is your team number.
         - Just log into the Yahoo Fantasy Baseball website, click on "My Team", then check the URL to see what team number you are.
     - `AUTH_FILE`: Where to store the credentials. Can be anything you want.

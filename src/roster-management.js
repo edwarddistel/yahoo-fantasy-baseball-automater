@@ -6,30 +6,22 @@ exports.rosterManagement = {
     switch (pos) {
       case "1B":
         return "FB";
-        break;
       case "2B":
         return "SB";
-        break;
       case "3B":
         return "TB";
-        break;
       case "FB":
         return "1B";
-        break;
       case "SB":
         return "2B";
-        break;
       case "TB":
         return "3B";
-        break;
       case "OF1":
       case "OF2":
       case "OF3":
         return "OF";
-        break;        
       default:
         return pos;
-        break;
     }
   },
 
@@ -39,14 +31,11 @@ exports.rosterManagement = {
       case "OF2":
       case "OF3":
         return "OF";
-        break;
       case "UT1":
       case "UT2":
         return "UT";
-        break;
       default:
         return pos;
-        break;
     }
   },
 
@@ -54,17 +43,16 @@ exports.rosterManagement = {
   sortPlayers(players, roster, playersByPos) {
     Object.values(players.hitters).forEach((player) => {
       const positions = player.position.split(",");
-      if (player.status && (player.status.substr(0,2).includes("DL"))) {
-        playersByPos["IL"].push(player);
+      if (player.status && player.status.substr(0, 2).includes("DL")) {
+        playersByPos.IL.push(player);
       } else if (player.status || player.logFive === "NO GAME") {
-        playersByPos["BN"].push(player);
+        playersByPos.BN.push(player);
       } else {
-        playersByPos["UT"].push(player);
-        positions.forEach(position => {
+        playersByPos.UT.push(player);
+        positions.forEach((position) => {
           const posFormatted = this.convertPositionFormat(position);
           playersByPos[posFormatted].push(player);
-          if (posFormatted === "FB" || posFormatted === "TB")
-            playersByPos["CI"].push(player);
+          if (posFormatted === "FB" || posFormatted === "TB") playersByPos.CI.push(player);
         });
       }
     });
@@ -74,7 +62,7 @@ exports.rosterManagement = {
 
   // First, slot in players who only have a single display position
   firstPass(roster, playersByPos) {
-    const pos = ["C","FB","SB","TB","SS","CI","OF1","OF2","OF3","UT1","UT2"];
+    const pos = ["C", "FB", "SB", "TB", "SS", "CI", "OF1", "OF2", "OF3", "UT1", "UT2"];
 
     for (let i = 0; i < pos.length; i++) {
       const convertedOFs = this.outfieldConvert(pos[i]);
@@ -92,16 +80,16 @@ exports.rosterManagement = {
 
   // Now go back and replace swap out starters with bench players who have a higher log5
   secondPass(roster, playersByPos) {
-    const bench = playersByPos["UT"];
+    const bench = playersByPos.UT;
 
-    bench.forEach(player => {
+    bench.forEach((player) => {
       if (player.logFive !== "NO GAME") {
         const positions = player.position.split(",");
-        positions.forEach(position => {
+        positions.forEach((position) => {
           const formattedPos = this.convertPositionFormat(position);
           if (formattedPos === "OF") {
             for (let i = 1; i < 4; i++) {
-              const updated = this.compareReplace(player, "OF" + i, roster, playersByPos);
+              const updated = this.compareReplace(player, `OF${i}`, roster, playersByPos);
               roster = updated[0];
               playersByPos = updated[1];
             }
@@ -114,12 +102,10 @@ exports.rosterManagement = {
       }
     });
 
-
-
     const uts = ["UT1", "UT2"];
-    uts.forEach(ut => {
-      const benchTwo = playersByPos["BN"];
-      benchTwo.forEach(player => {
+    uts.forEach((ut) => {
+      const benchTwo = playersByPos.BN;
+      benchTwo.forEach((player) => {
         if (player.logFive !== "NO GAME") {
           const updated = this.compareReplace(player, ut, roster, playersByPos);
           roster = updated[0];
@@ -127,12 +113,10 @@ exports.rosterManagement = {
         }
       });
     });
-    
-
 
     // Put IL players on IL
-    playersByPos["IL"].forEach(player => {
-      roster["IL"].push(player);
+    playersByPos.IL.forEach((player) => {
+      roster.IL.push(player);
       playersByPos = this.findAndRemovePlayerFromArrays(player, playersByPos);
     });
 
@@ -141,27 +125,26 @@ exports.rosterManagement = {
       if (pos) {
         if (Array.isArray(pos)) {
           pos.forEach((player) => {
-              playersByPos = this.findAndRemovePlayerFromArrays(player, playersByPos);
-              roster["BN"].push(player);
-
+            playersByPos = this.findAndRemovePlayerFromArrays(player, playersByPos);
+            roster.BN.push(player);
           });
         } else {
           playersByPos = this.findAndRemovePlayerFromArrays(pos, playersByPos);
-          roster["BN"].push(pos);
-        } 
+          roster.BN.push(pos);
+        }
       }
     });
 
     // Check to make sure no spot is empty. If a spot is empty, put in a player who might be day-to-day
     for (const pos in roster) {
-      if (!roster[pos] && roster['BN']) {
+      if (!roster[pos] && roster.BN) {
         const formattedPos = this.convertPositionFormat(pos);
-        Object.values(roster['BN']).forEach((player) => {
-          if ((player.logFive !== "NO GAME") && (player.position.includes(formattedPos) || pos.includes('UT'))) {
+        Object.values(roster.BN).forEach((player) => {
+          if (player.logFive !== "NO GAME" && (player.position.includes(formattedPos) || pos.includes("UT"))) {
             roster[pos] = player;
-            const newBench = roster['BN'].filter(el => el.name !== player.name);
-            roster['BN'].length = 0;
-            roster['BN'] = newBench.slice();
+            const newBench = roster.BN.filter((el) => el.name !== player.name);
+            roster.BN.length = 0;
+            roster.BN = newBench.slice();
           }
         });
       }
@@ -176,13 +159,13 @@ exports.rosterManagement = {
       const starter = roster[pos];
       let winner;
       if (starter) {
-        winner = (player.logFive > starter.logFive) && (!player.status) ? player : starter;
+        winner = player.logFive > starter.logFive && !player.status ? player : starter;
         if (winner.name !== starter.name) {
           playersByPos = this.findAndRemovePlayerFromArrays(winner, playersByPos);
           roster[pos] = winner;
-          playersByPos["BN"].push(starter);
+          playersByPos.BN.push(starter);
         }
-      } 
+      }
     }
     return [roster, playersByPos];
   },
@@ -190,13 +173,8 @@ exports.rosterManagement = {
   checkIfStarting(player, roster) {
     let needle = false;
 
-    Object.keys(roster).forEach(pos => {
-      if (
-        roster[pos] &&
-        roster[pos].name &&
-        roster[pos].name === player.name
-      )
-        needle = true;
+    Object.keys(roster).forEach((pos) => {
+      if (roster[pos] && roster[pos].name && roster[pos].name === player.name) needle = true;
     });
     return needle;
   },
@@ -204,7 +182,7 @@ exports.rosterManagement = {
   // Remove a player from the list of available players in this.playerByPos
   findAndRemovePlayerFromArrays(player, playersByPos) {
     for (const pos in playersByPos) {
-      playersByPos[pos] = playersByPos[pos].filter(el => el.name !== player.name);
+      playersByPos[pos] = playersByPos[pos].filter((el) => el.name !== player.name);
     }
     return playersByPos;
   },
@@ -226,12 +204,12 @@ exports.rosterManagement = {
         coverage_type: "date",
         date: yahooDay,
         players: {
-          player: []
-        }
-      }
+          player: [],
+        },
+      },
     };
 
-    Object.keys(updatedRoster).forEach(pos => {
+    Object.keys(updatedRoster).forEach((pos) => {
       let updatedPos;
       let player;
       if (pos === "FB") updatedPos = "1B";
@@ -242,27 +220,25 @@ exports.rosterManagement = {
       else updatedPos = pos;
 
       if (pos === "BN") {
-        updatedRoster[pos].forEach(player => {
+        updatedRoster[pos].forEach((player) => {
           player = { player_key: player.playerKey, position: "BN" };
           if (player) yahooRoster.roster.players.player.push(player);
         });
       } else if (pos === "IL") {
-        updatedRoster[pos].forEach(player => {
+        updatedRoster[pos].forEach((player) => {
           player = { player_key: player.playerKey, position: "DL" };
           if (player) yahooRoster.roster.players.player.push(player);
         });
-      } else {
-        if (updatedRoster[pos]) {
-          player = {
-            player_key: updatedRoster[pos].playerKey,
-            position: updatedPos
-          };
-          if (player) yahooRoster.roster.players.player.push(player);
-        }
+      } else if (updatedRoster[pos]) {
+        player = {
+          player_key: updatedRoster[pos].playerKey,
+          position: updatedPos,
+        };
+        if (player) yahooRoster.roster.players.player.push(player);
       }
     });
 
     // Convert JSON object to XML
     return js2xmlparser.parse("fantasy_content", yahooRoster);
-  }
+  },
 };

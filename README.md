@@ -2,7 +2,7 @@
 
 This tool automates your starting lineup for Yahoo Fantasy Baseball. 
 
-For a simpler app that just pulls in the raw data, and a more complete walkthrough on how to get the correct authorization codes from Yahoo, see my [Yahoo Fantasy Baseball Reade](https://github.com/edwarddistel/yahoo-fantasy-baseball-reader).
+For a simpler app that just pulls in the raw data, and a more complete walkthrough on how to get the correct authorization codes from Yahoo, see my [Yahoo Fantasy Baseball Reader](https://github.com/edwarddistel/yahoo-fantasy-baseball-reader).
 
 ## Installation
 

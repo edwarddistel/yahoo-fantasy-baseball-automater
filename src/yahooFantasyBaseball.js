@@ -34,6 +34,9 @@ exports.yfbb = {
   myWeeklyStats() {
     return `${this.YAHOO}/team/${CONFIG.LEAGUE_KEY}.t.${CONFIG.TEAM}/stats;type=week;week=${this.WEEK}`;
   },
+  ownership(playerKey) {
+    return `${this.YAHOO}/league/${CONFIG.LEAGUE_KEY}/players;player_keys=${playerKey}/ownership`;
+  },
   playerSearch() {
     return `${this.YAHOO}/league/${CONFIG.LEAGUE_KEY}/players;search=`;
   },
@@ -57,8 +60,7 @@ exports.yfbb = {
   },
 
   handleError(err, func) {
-    const msg = err.response.data ? JSON.parse(parser.toJson(err.response.data)).error.description : "";
-    console.error(`Error with credentials in ${func}(): ${err}, ${msg}`);
+    console.error(`Error with credentials in ${func}(): ${JSON.stringify(err)}`);
   },
 
   // Write to an external file to display output data
@@ -158,7 +160,7 @@ exports.yfbb = {
       const jsonData = JSON.parse(parser.toJson(response.data));
       return jsonData;
     } catch (err) {
-      if (err.response.data && err.response.data.error && err.response.data.error.description && err.response.data.error.description.includes("token_expired")) {
+      if (err && err.response && err.response.data && err.response.data.error && err.response.data.error.description && err.response.data.error.description.includes("token_expired")) {
         const newToken = await this.refreshAuthorizationToken(this.CREDENTIALS.refresh_token);
         if (newToken && newToken.data && newToken.data.access_token) {
           this.CREDENTIALS = newToken.data;
@@ -233,6 +235,15 @@ exports.yfbb = {
       }
     } catch (err) {
       this.handleError(err, "getMyPlayerStats");
+    }
+  },
+
+  async getPlayerOwner(playerKey) {
+    try {
+      const results = await this.makeAPIrequest(this.ownership(playerKey));
+      return results.fantasy_content.league.players.player;
+    } catch (err) {
+      this.handleError(err, "getPlayerOwner");
     }
   },
 

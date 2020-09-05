@@ -47,7 +47,7 @@ exports.scrape = {
 
         const closerList = [];
         teams.forEach((team, index) => {
-          closerList.push(pitchers[index]);
+          closerList.push(pitchers[index].normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
         });
 
         resolve(closerList);

@@ -95,14 +95,14 @@ async function checkClosers() {
       console.log(`Getting my players...`);
       const myPlayerList = await yahoo.yfbb.getMyPlayers();
       const myRelievers = [];
-    
+
       // If able to get the players from your team
       if (myPlayerList && Array.isArray(myPlayerList)) {
 
         // Grab the names of just the relief pitchers
         myPlayerList.forEach((player) => {
           if (player.display_position === "RP") {
-            myRelievers.push(player.name.full);
+            myRelievers.push(player.name.full.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
           }
         });
 
@@ -139,7 +139,7 @@ async function checkClosers() {
 
         // Get the ownership status of all the player keys
         const playerOwnership = await yahoo.yfbb.getPlayerOwner(playerKeys.join(","));
-        
+
         // If successful
         if (playerOwnership && Array.isArray(playerOwnership)) {
           playerOwnership.forEach((player) => {

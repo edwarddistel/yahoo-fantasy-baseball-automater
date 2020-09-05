@@ -34,7 +34,8 @@ exports.mlbComStats = {
 
   // Look up the MLB.com player ID via a player name and team
   async playerID(name, team) {
-    const url = `http://lookup-service-prod.mlb.com/json/named.search_player_all.bam?sport_code=%27mlb%27&active_sw=%27Y%27&name_part=%27${encodeURIComponent(name.toLowerCase())}%25%27`;
+    const playerName = encodeURIComponent(name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+    const url = `http://lookup-service-prod.mlb.com/json/named.search_player_all.bam?sport_code=%27mlb%27&active_sw=%27Y%27&name_part=%27${playerName}%25%27`;
  
     try {
       const response = await axios.get(url);

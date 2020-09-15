@@ -19,6 +19,7 @@ You'll need 3 values from Yahoo to start -- I have a detailed guide here in my [
 1. Gets the stats of all players from MLB.com (Yahoo didn't provide batting average against for pitchers)
 1. Calculates the probability of a hit using the [Log5 formula](https://sabr.org/journal/article/matchup-probabilities-in-major-league-baseball/)
 1. Makes several passes through the roster to fill out each position using the highest Log5 value for that day
+1. Sets your roster for tomorrow and the following 4 days
 1. Grabs the closers from MLB.com and compares them to your relief pitchers, letting you know if one of your RPs is no longer a closer and letting you know of those who are who is still a free agent in your league.
 
 ## Usage

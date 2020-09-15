@@ -6,6 +6,8 @@ For a simpler app that just pulls in the raw data, and a more complete walkthrou
 
 **NEW for 2020**: It now also pulls in the list of closers, compares them against your relief pitchers, tells you to drop ones who are no longer closing, then searches your league to see which closers are still available and healthy. 
 
+To run that and only that function `npm run closers`.
+
 ## Installation
 
 ### Part 1: Get access codes from Yahoo
@@ -53,7 +55,7 @@ https://api.login.yahoo.com/oauth2/request_auth?client_id=YOUR-CLIENT-ID-GOES-HE
             npm run league-prefix
             ```
             - You can find your league ID simply by logging into the Yahoo Fantasy Baseball website - it'll be the value after `https://baseball.fantasysports.yahoo.com/b1/`
-            - Combine those two with ".l." for a final format of `398.l.123456`
+            - Combine those two with ".l." (that's a lowercase L) for a final format of `398.l.123456`
     - `TEAM`: This is your team number.
         - Just log into the Yahoo Fantasy Baseball website, click on "My Team", then check the URL to see what team number you are.
     - `AUTH_FILE`: Where to store the credentials. Can be anything you want.

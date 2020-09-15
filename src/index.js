@@ -90,7 +90,6 @@ async function checkClosers() {
 
     // If scrape a success
     if (closerList && Array.isArray(closerList)) {
-
       // Fetch players from your team
       console.log(`Getting my players...`);
       const myPlayerList = await yahoo.yfbb.getMyPlayers();
@@ -98,7 +97,6 @@ async function checkClosers() {
 
       // If able to get the players from your team
       if (myPlayerList && Array.isArray(myPlayerList)) {
-
         // Grab the names of just the relief pitchers
         myPlayerList.forEach((player) => {
           if (player.display_position === "RP") {
@@ -164,11 +162,13 @@ const loop = async () => {
   // Read credentials file or get new authorization token
   await yahoo.yfbb.readCredentials();
 
-  for (let i = 1; i < 5; i++) {
-    global.firstPass = true;
-    await getData(i);
-    global.firstPass = false;
-  } 
+  if (!process.argv[2]) {
+    for (let i = 1; i < 5; i++) {
+      global.firstPass = true;
+      await getData(i);
+      global.firstPass = false;
+    }
+  }
 
   checkClosers();
 };

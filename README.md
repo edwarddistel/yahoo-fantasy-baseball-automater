@@ -9,56 +9,17 @@ For a simpler app that just pulls in the raw data, and a more complete walkthrou
 To run that and only that function `npm run closers`.
 
 ## Installation
-
-### Part 1: Get access codes from Yahoo
-1. Log into Yahoo
-2. Navigate to https://developer.yahoo.com/apps/create/
-3. Fill out the form
-    - Application Name (Whatever)
-    - Application Type (Web Application)
-    - Callback Domain (anything, e.g. www.github.com)
-    - API Permissions (checkmark Fantasy Sports, then Read/Write)
-4. Create App
-5. Yahoo will give you 3 values. Write down the last two:
-    - App ID (don't care)
-    - Client ID/Consumer Key
-    - Client Secret/Consumer Secret
-6. However the above codes are **not enough** to interface with the Yahoo Fantasy API. Take the `Client ID/Consumer Key` from above and paste it into the following URL:
-    
-https://api.login.yahoo.com/oauth2/request_auth?client_id=YOUR-CLIENT-ID-GOES-HERE&redirect_uri=oob&response_type=code&language=en-us
-
-7. Enter that URL into your browser.
-8. Agree to allow access for your app.
-
-9. Grab the code Yahoo now gives you.
+You'll need 3 values from Yahoo to start -- I have a detailed guide here in my [Yahoo Fantasy Baseball Reader](https://github.com/edwarddistel/yahoo-fantasy-baseball-reader).
 
 
-### Part 2: Configure this app
+## Logic
 
-10. [Install NodeJS](https://nodejs.org/en/download/) (I used v11.11.0 but most versions should work)
-11. Clone this repo
-12. In the repo directory type `npm install`
-13. Open `config.json` in a text editor
-14. Enter in the following values and save:
-    - `CONSUMER_KEY`: Obtained from Yahoo in step 5 above
-    - `CONSUMER_SECRET`: Also obtained from Yahoo in step 5 above
-    - `YAHOO_AUTH_CODE`: Obtained from Yahoo in step 9 above (**not the App ID in step 5!**)
-    - `LEAGUE_KEY`: the League Key has three parts: 
-        - (1) a unique prefix Yahoo randomly assigns each season
-        - (2) the string ".l." (that's a lowercase L)
-        - (3) the unique ID of your league
-        - E.g.: `398.l.123456`
-        - To find out this number:
-            - If it's 2020, the unique prefix for MLB is `398`. 
-            - You can find out the league prefix by running:
-            ```
-            npm run league-prefix
-            ```
-            - You can find your league ID simply by logging into the Yahoo Fantasy Baseball website - it'll be the value after `https://baseball.fantasysports.yahoo.com/b1/`
-            - Combine those two with ".l." (that's a lowercase L) for a final format of `398.l.123456`
-    - `TEAM`: This is your team number.
-        - Just log into the Yahoo Fantasy Baseball website, click on "My Team", then check the URL to see what team number you are.
-    - `AUTH_FILE`: Where to store the credentials. Can be anything you want.
+1. Gets probable pitchers for that day
+1. Gets the roster of your players from Yahoo
+1. Gets the stats of all players from MLB.com (Yahoo didn't provide batting average against for pitchers)
+1. Calculates the probability of a hit using the [Log5 formula](https://sabr.org/journal/article/matchup-probabilities-in-major-league-baseball/)
+1. Makes several passes through the roster to fill out each position using the highest Log5 value for that day
+1. Grabs the closers from MLB.com and compares them to your relief pitchers, letting you know if one of your RPs is no longer a closer and letting you know of those who are who is still a free agent in your league.
 
 ## Usage
 ### Run the app

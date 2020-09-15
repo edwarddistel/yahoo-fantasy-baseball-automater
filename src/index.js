@@ -162,7 +162,8 @@ const loop = async () => {
   // Read credentials file or get new authorization token
   await yahoo.yfbb.readCredentials();
 
-  if (!process.argv[2]) {
+  // If you only want to check the status of your closers, pass in that command line param
+  if (!process.argv[2] === "closers") {
     for (let i = 1; i < 5; i++) {
       global.firstPass = true;
       await getData(i);

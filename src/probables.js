@@ -1,11 +1,10 @@
 const xray = require("x-ray");
 
 exports.mlbPitchers = {
-
   // Promisify callback for x-ray
   getProbablePitchers(day) {
     return new Promise((resolve, reject) => {
-      this.getPitchers(day, data => {
+      this.getPitchers(day, (data) => {
         resolve(data);
       });
     });
@@ -47,14 +46,9 @@ exports.mlbPitchers = {
       Tigers: "DET",
       Twins: "MIN",
       "White Sox": "CWS",
-      Yankees: "NYY"
+      Yankees: "NYY",
     };
-    return teams[longName]
-      ? teams[longName]
-      : longName
-          .replace(/ /g, "_")
-          .toUpperCase()
-          .trim();
+    return teams[longName] ? teams[longName] : longName.replace(/ /g, "_").toUpperCase().trim();
   },
 
   // Take the results and put them in a nice JSON object
@@ -63,26 +57,26 @@ exports.mlbPitchers = {
     const matchups = new Array(totalGames);
     const teamPitchers = {};
     for (let i = 0; i < totalGames; i++) {
-      let j = i * 2;
+      const j = i * 2;
       matchups[i] = {
         teamAway: rawData.teamAway[i].trim(),
         teamHome: rawData.teamHome[i].trim(),
         time: rawData.time[i].trim(),
         pitcherAway: rawData.pitchers[j].trim(),
-        pitcherHome: rawData.pitchers[j + 1].trim()
+        pitcherHome: rawData.pitchers[j + 1].trim(),
       };
       const homeTeamCode = this.teamShortCode(rawData.teamHome[i].trim());
       const awayTeamCode = this.teamShortCode(rawData.teamAway[i].trim());
       teamPitchers[homeTeamCode] = {
         pitcher: rawData.pitchers[j].trim(),
-        team: awayTeamCode
+        team: awayTeamCode,
       };
       teamPitchers[awayTeamCode] = {
         pitcher: rawData.pitchers[j + 1].trim(),
-        team: homeTeamCode
+        team: homeTeamCode,
       };
     }
-    callback({ matchups: matchups, opponentPitchers: teamPitchers });
+    callback({ matchups, opponentPitchers: teamPitchers });
   },
 
   // Values to scrape
@@ -92,24 +86,24 @@ exports.mlbPitchers = {
       teamAway: [".probable-pitchers__team-name--away"],
       teamHome: [".probable-pitchers__team-name--home"],
       time: ["time"],
-      pitchers: [".probable-pitchers__pitcher-name"]
+      pitchers: [".probable-pitchers__pitcher-name"],
     };
 
     // Run scraper
     const x = xray();
-    x(url, selector)((err, result) => {
+    x(
+      url,
+      selector
+    )((err, result) => {
       if (err) {
         return `Error in getPitchers: ${err}`;
-      } else {
-        this.formatResults(result, callback);
       }
+      this.formatResults(result, callback);
     });
   },
 
   getFirstGame(day, callback) {
     const url = ``;
-    const selector = {
-      
-    }
-  }
+    const selector = {};
+  },
 };

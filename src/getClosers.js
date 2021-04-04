@@ -19,9 +19,7 @@ exports.scrape = {
   },
 
   processPitchers(pitchersArr) {
-    return pitchersArr.filter((val, index) => {
-      return index % 3 === 0;
-    });
+    return pitchersArr.filter((val, index) => index % 3 === 0);
   },
 
   // Scrape probable pitchers

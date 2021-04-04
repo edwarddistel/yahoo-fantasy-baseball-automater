@@ -2,7 +2,6 @@ const stats = require("./mlbcom-stats");
 const yahoo = require("./yahooFantasyBaseball");
 const probables = require("./probables");
 const roster = require("./roster-management");
-const closers = require("./getClosers");
 
 async function getData(i) {
   try {
@@ -82,88 +81,15 @@ async function getData(i) {
   }
 }
 
-// Checks available closers from MLB.com, compares vs your team and who's a fre agent
-async function checkClosers() {
-  try {
-    // Scrape all closers from MLB.com
-    const closerList = await closers.scrape.getPitchers();
-
-    // If scrape a success
-    if (closerList && Array.isArray(closerList)) {
-      // Fetch players from your team
-      console.log(`Getting my players...`);
-      const myPlayerList = await yahoo.yfbb.getMyPlayers();
-      const myRelievers = [];
-
-      // If able to get the players from your team
-      if (myPlayerList && Array.isArray(myPlayerList)) {
-        // Grab the names of just the relief pitchers
-        myPlayerList.forEach((player) => {
-          if (player.display_position === "RP") {
-            myRelievers.push(player.name.full.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
-          }
-        });
-
-        // If your RP is already a closer, remove him from the list
-        myRelievers.forEach((reliever) => {
-          let isAcloser = false;
-          closerList.forEach((closer, index, object) => {
-            if (closer === reliever) {
-              isAcloser = true;
-              object.splice(index, 1);
-            }
-          });
-          // If not, drop the sucker!
-          if (!isAcloser) {
-            console.log(`${reliever} is on your team but is not a closer. Drop him!`);
-          }
-        });
-
-        // Before you can look up the status of any player in the leauge you must first acquire their Yahoo player ID key
-        const playerKeys = [];
-        process.stdout.write("Getting player IDs for each closer...");
-
-        // Cycle through them all
-        for (let i = 0; i < closerList.length; i++) {
-          const pitcher = closerList[i].replace("(IL)", "").trim();
-          process.stdout.write(".");
-          const playerKey = await yahoo.yfbb.getPlayer(pitcher);
-          // Push them onto an array
-          playerKeys.push(playerKey);
-          // Wait half a second, otherwise Yahoo gets mad
-          setTimeout(() => {}, 500);
-        }
-        process.stdout.write("\n");
-
-        // Get the ownership status of all the player keys
-        const playerOwnership = await yahoo.yfbb.getPlayerOwner(playerKeys.join(","));
-
-        // If successful
-        if (playerOwnership && Array.isArray(playerOwnership)) {
-          playerOwnership.forEach((player) => {
-            // Check to see if they're already on a team
-            const onAteam = player.ownership && player.ownership.ownership_type && player.ownership.ownership_type === "team";
-            // Check to make sure they're not injured
-            const onIL = player.status;
-            if (!onAteam && !onIL) {
-              console.log(`${player.name.full} is a closer and a free agent. Pick him up!`);
-            }
-          });
-        }
-      }
-    }
-  } catch (err) {
-    console.log(err);
-  }
-}
-
 // Loop the roster decisions over a period of 5 days
-const loop = async () => {
+const setRoster = async () => {
   // Read credentials file or get new authorization token
   await yahoo.yfbb.readCredentials();
 
-  // If you only want to check the status of your closers, pass in that command line param
-  if (!process.argv[2] === "closers") {
+  let skip = false;
+  if (process.argv[2] && process.argv[2] === "closers") skip = true;
+
+  if (!skip) {
     for (let i = 1; i < 5; i++) {
       global.firstPass = true;
       await getData(i);
@@ -171,7 +97,7 @@ const loop = async () => {
     }
   }
 
-  checkClosers();
+  await yahoo.yfbb.checkClosers();
 };
 
-loop();
+setRoster();

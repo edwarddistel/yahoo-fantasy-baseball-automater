@@ -5,6 +5,7 @@ const axios = require("axios");
 const parser = require("xml2json");
 
 const CONFIG = require("../config.json");
+const closers = require("./getClosers");
 
 exports.yfbb = {
   // Global credentials variable
@@ -41,7 +42,7 @@ exports.yfbb = {
     return `${this.YAHOO}/league/${CONFIG.LEAGUE_KEY}/players;search=`;
   },
   playerStats() {
-    return `${this.YAHOO}/player/player_key/stats;sort_type=season;sort_season=2018`;
+    return `${this.YAHOO}/player/player_key/stats;sort_type=season;sort_season=${new Date().getFullYear()}`;
   },
   roster() {
     return `${this.YAHOO}/team/${CONFIG.LEAGUE_KEY}.t.${CONFIG.TEAM}/roster/players`;
@@ -60,7 +61,7 @@ exports.yfbb = {
   },
 
   handleError(err, func) {
-    console.error(`Error with credentials in ${func}(): ${JSON.stringify(err)}`);
+    console.error(`Error with credentials in ${func}(): ${JSON.stringify(err, null, 4)}`);
   },
 
   // Write to an external file to display output data
@@ -356,6 +357,81 @@ exports.yfbb = {
         this.handleError(err, "positionPlayer");
         process.exit();
       }
+    }
+  },
+
+  // Checks available closers from MLB.com, compares vs your team and who's a free agent
+  async checkClosers() {
+    try {
+      // Scrape all closers from MLB.com
+      const closerList = await closers.scrape.getPitchers();
+
+      // If scrape a success
+      if (closerList && Array.isArray(closerList)) {
+        // Fetch players from your team
+        console.log(`Getting my players...`);
+        const myPlayerList = await this.getMyPlayers();
+        const myRelievers = [];
+
+        // If able to get the players from your team
+        if (myPlayerList && Array.isArray(myPlayerList)) {
+          // Grab the names of just the relief pitchers
+          myPlayerList.forEach((player) => {
+            if (player.display_position === "RP") {
+              myRelievers.push(player.name.full.normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+            }
+          });
+
+          // If your RP is already a closer, remove him from the list
+          myRelievers.forEach((reliever) => {
+            let isAcloser = false;
+            closerList.forEach((closer, index, object) => {
+              if (closer === reliever) {
+                isAcloser = true;
+                object.splice(index, 1);
+              }
+            });
+            // If not, drop the sucker!
+            if (!isAcloser) {
+              console.log(`${reliever} is on your team but is not a closer. Drop him!`);
+            }
+          });
+
+          // Before you can look up the status of any player in the leauge you must first acquire their Yahoo player ID key
+          const playerKeys = [];
+          process.stdout.write("Getting player IDs for each closer...");
+
+          // Cycle through them all
+          for (let i = 0; i < closerList.length; i++) {
+            const pitcher = closerList[i].replace("(IL)", "").trim();
+            process.stdout.write(".");
+            const playerKey = await this.getPlayer(pitcher);
+            // Push them onto an array
+            if (playerKey && playerKey.length > 1) playerKeys.push(playerKey);
+            // Wait half a second, otherwise Yahoo gets mad
+            setTimeout(() => {}, 500);
+          }
+          process.stdout.write("\n");
+
+          // Get the ownership status of all the player keys
+          const playerOwnership = await this.getPlayerOwner(playerKeys.join(","));
+
+          // If successful
+          if (playerOwnership && Array.isArray(playerOwnership)) {
+            playerOwnership.forEach((player) => {
+              // Check to see if they're already on a team
+              const onAteam = player.ownership && player.ownership.ownership_type && player.ownership.ownership_type === "team";
+              // Check to make sure they're not injured
+              const onIL = player.status;
+              if (!onAteam && !onIL) {
+                console.log(`${player.name.full} is a closer and a free agent. Pick him up!`);
+              }
+            });
+          }
+        }
+      }
+    } catch (err) {
+      console.log(err);
     }
   },
 };

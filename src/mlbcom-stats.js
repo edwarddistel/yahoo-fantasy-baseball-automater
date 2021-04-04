@@ -1,16 +1,16 @@
 const axios = require("axios");
-const fs = require('fs');
+const fs = require("fs");
+
 const LEAGUE_AVERAGE = 0.249;
 
 exports.mlbComStats = {
-
   existingPlayerIDs: {},
   existingPlayerStats: {},
 
   // Write to an external file to display output data
-  writeToFile (data, file, flag) {
+  writeToFile(data, file, flag) {
     if (flag === null) flag = `a`;
-    fs.writeFile(file, data, {flag: flag}, (err) => {
+    fs.writeFile(file, data, { flag }, (err) => {
       if (err) {
         console.error(`Error in writing to ${file}: ${err}`);
       }
@@ -34,16 +34,21 @@ exports.mlbComStats = {
 
   // Look up the MLB.com player ID via a player name and team
   async playerID(name, team) {
-    const playerName = encodeURIComponent(name.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
+    const playerName = encodeURIComponent(
+      name
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+    );
     const url = `http://lookup-service-prod.mlb.com/json/named.search_player_all.bam?sport_code=%27mlb%27&active_sw=%27Y%27&name_part=%27${playerName}%25%27`;
- 
+
     try {
       const response = await axios.get(url);
       const results = response.data.search_player_all.queryResults.row;
-      var playerID = null;
+      let playerID = null;
       // If multiple players with the same name, check team affiliation
       if (results && results.length > 1) {
-        results.forEach(player => {
+        results.forEach((player) => {
           if (player.team_abbrev === team) playerID = player.player_id;
         });
       } else {
@@ -90,35 +95,35 @@ exports.mlbComStats = {
     const opposingPitchersData = {};
 
     // Try pulling MLBcom playerIDs from existing file; if not, create file for next time
-    const playerIDsFile = './playerIDs.json';
+    const playerIDsFile = "./playerIDs.json";
     let playerIDs;
     try {
       if (fs.existsSync(playerIDsFile)) {
         try {
-          playerIDs = JSON.parse(fs.readFileSync(playerIDsFile, 'utf8'));
+          playerIDs = JSON.parse(fs.readFileSync(playerIDsFile, "utf8"));
           Object.keys(playerIDs).forEach((key) => {
             this.existingPlayerIDs[key] = playerIDs[key];
           });
         } catch (err) {
-            console.error(`Error parsing file ${playerIDsFile}: ${err}.\n`);
+          console.error(`Error parsing file ${playerIDsFile}: ${err}.\n`);
         }
       }
-    } catch(err) {
+    } catch (err) {
       console.log(`No MLB.com playerID found, creating one.`);
     }
 
     // Get MLBcom stats for each player
     process.stdout.write(`Acquiring player statistics from MLB.com...`);
-    await this.asyncForEach(myPlayers, async player => {
+    await this.asyncForEach(myPlayers, async (player) => {
       process.stdout.write(`.`);
       const playerTeam = player.editorial_team_abbr.toUpperCase();
 
       // If before May 1, get last year's stats; otherwise get this year's stats
       const d = new Date();
       const mayFirst = new Date(`4-5-${d.getFullYear()}`);
-      const year = d < mayFirst ? d.getFullYear()-1 : d.getFullYear();
+      const year = d < mayFirst ? d.getFullYear() - 1 : d.getFullYear();
 
-      const playerName = player.name.ascii_first + " " + player.name.ascii_last;
+      const playerName = `${player.name.ascii_first} ${player.name.ascii_last}`;
 
       // See if hitter's player ID and stats exist; if not, look them up, then store them
       const playerID = this.existingPlayerIDs[player.player_key] ? this.existingPlayerIDs[player.player_key] : await this.playerID(playerName, playerTeam);
@@ -129,17 +134,15 @@ exports.mlbComStats = {
       let pitchersAverage = 0;
       let battingAverage = 0;
       if (player.position_type === "B") {
-
         if (Array.isArray(playerStats)) {
-          playerStats.forEach(team => {
-              battingAverage += team ? parseFloat(team.avg, 10) : LEAGUE_AVERAGE; 
+          playerStats.forEach((team) => {
+            battingAverage += team ? parseFloat(team.avg, 10) : LEAGUE_AVERAGE;
           });
         } else {
-            battingAverage = playerStats ? playerStats.avg : LEAGUE_AVERAGE;
+          battingAverage = playerStats ? playerStats.avg : LEAGUE_AVERAGE;
         }
 
-        if (opposingPitchersData[playerTeam])
-          pitchersAverage = opposingPitchersData[playerTeam];
+        if (opposingPitchersData[playerTeam]) pitchersAverage = opposingPitchersData[playerTeam];
         else {
           // If they're playing a game that day
           if (pitchers.opponentPitchers[playerTeam]) {
@@ -147,19 +150,22 @@ exports.mlbComStats = {
 
             // If the pitcher is announced
             if (opposingPitcher.pitcher !== "TBD") {
-
               // See if opposing pitcher ID and stats exist; if not, look them up, then store them
-              const oppPitchID = this.existingPlayerIDs[opposingPitcher.pitcher+opposingPitcher.team] ? this.existingPlayerIDs[opposingPitcher.pitcher+opposingPitcher.team] :  await this.playerID(opposingPitcher.pitcher, opposingPitcher.team);
-              const oppPitchStats = this.existingPlayerStats[opposingPitcher.pitcher+opposingPitcher.team] ? this.existingPlayerStats[opposingPitcher.pitcher+opposingPitcher.team] : await this.playerStats(oppPitchID, "P", year);
-              this.existingPlayerIDs[opposingPitcher.pitcher+opposingPitcher.team] = oppPitchID;
-              this.existingPlayerStats[opposingPitcher.pitcher+opposingPitcher.team] = oppPitchStats;
-              
+              const oppPitchID = this.existingPlayerIDs[opposingPitcher.pitcher + opposingPitcher.team]
+                ? this.existingPlayerIDs[opposingPitcher.pitcher + opposingPitcher.team]
+                : await this.playerID(opposingPitcher.pitcher, opposingPitcher.team);
+              const oppPitchStats = this.existingPlayerStats[opposingPitcher.pitcher + opposingPitcher.team]
+                ? this.existingPlayerStats[opposingPitcher.pitcher + opposingPitcher.team]
+                : await this.playerStats(oppPitchID, "P", year);
+              this.existingPlayerIDs[opposingPitcher.pitcher + opposingPitcher.team] = oppPitchID;
+              this.existingPlayerStats[opposingPitcher.pitcher + opposingPitcher.team] = oppPitchStats;
+
               if (oppPitchStats) {
                 if (Array.isArray(oppPitchStats)) {
-                  oppPitchStats.forEach(team => {
+                  oppPitchStats.forEach((team) => {
                     pitchersAverage += parseFloat(team.ops);
                   });
-                  pitchersAverage = pitchersAverage / oppPitchStats.length;
+                  pitchersAverage /= oppPitchStats.length;
                 } else {
                   pitchersAverage = oppPitchStats.ops;
                 }
@@ -177,22 +183,19 @@ exports.mlbComStats = {
           }
         }
 
-        const logFive =
-          pitchersAverage === "NO GAME"
-            ? "NO GAME"
-            : this.predictLogFive(battingAverage, pitchersAverage);
+        const logFive = pitchersAverage === "NO GAME" ? "NO GAME" : this.predictLogFive(battingAverage, pitchersAverage);
         myHittersData[player.player_id] = {
-          logFive: logFive,
-          multiPos: player.display_position.includes(",") ? true : false,
+          logFive,
+          multiPos: !!player.display_position.includes(","),
           name: playerName,
-          playerID: playerID,
+          playerID,
           playerKey: player.player_key,
-          playerStats: playerStats,
+          playerStats,
           position: player.display_position,
           positionType: player.position_type,
           rosterPosition: player.selected_position.position,
           status: player.status ? player.status : null,
-          team: playerTeam
+          team: playerTeam,
         };
       } else {
         const pitcherID = await this.playerID(playerName, playerTeam);
@@ -200,20 +203,20 @@ exports.mlbComStats = {
 
         myPitchersData[player.player_id] = {
           name: playerName,
-          playerID: playerID,
+          playerID,
           playerKey: player.player_key,
           playerStats: pitcherStats,
           position: player.display_position,
           positionType: player.position_type,
           rosterPosition: player.selected_position.position,
           status: player.status ? player.status : null,
-          team: playerTeam
+          team: playerTeam,
         };
       }
     });
     process.stdout.write("\n");
-    this.writeToFile(JSON.stringify(this.existingPlayerIDs), playerIDsFile, 'w');
+    this.writeToFile(JSON.stringify(this.existingPlayerIDs), playerIDsFile, "w");
 
     return { hitters: myHittersData, pitchers: myPitchersData };
-  }
+  },
 };

@@ -22,7 +22,11 @@
         "require-jsdoc": "off",
         "guard-for-in": "off",
         "prettier/prettier": ["error"],
-        "no-plusplus": "off"
+        "no-plusplus": "off",
+        "consistent-return": "off",
+        "no-param-reassign": "off",
+        "no-await-in-loop": "off",
+        "no-lonley-if": "off"
     },
     "overrides": [
         {

@@ -1,0 +1,3 @@
+# cron job to run the app a few times a day from within a Docker image
+0 11,19 * * * /usr/local/bin/node /usr/src/app/src/index.js > /usr/src/app/cron-log.txt 2>&1
+

@@ -47,7 +47,9 @@ exports.scrape = {
         teams.forEach((team, index) => {
           closerList.push(pitchers[index].normalize("NFD").replace(/[\u0300-\u036f]/g, ""));
         });
-
+        if (closerList.length < 1) {
+          console.log("Error getting closers from mlb.com");
+        }
         resolve(closerList);
       });
     });

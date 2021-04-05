@@ -14,4 +14,5 @@ RUN dpkg-reconfigure --frontend noninteractive tzdata
 COPY automater-cron /etc/cron.d/automater-cron
 RUN chmod 0644 /etc/cron.d/automater-cron
 RUN crontab /etc/cron.d/automater-cron
+RUN service cron tab
 CMD ["cron", "-f"]

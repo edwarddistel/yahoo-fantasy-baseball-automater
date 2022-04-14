@@ -1,4 +1,7 @@
+/* eslint-disable */
+
 const axios = require("axios");
+const { Console } = require("console");
 const fs = require("fs");
 
 const LEAGUE_AVERAGE = 0.249;
@@ -40,23 +43,34 @@ exports.mlbComStats = {
         .normalize("NFD")
         .replace(/[\u0300-\u036f]/g, "")
     );
-    const url = `http://lookup-service-prod.mlb.com/json/named.search_player_all.bam?sport_code=%27mlb%27&active_sw=%27Y%27&name_part=%27${playerName}%25%27`;
+    const url = `https://lookup-service-prod.mlb.com/json/named.search_player_all.bam?sport_code=%27mlb%27&active_sw=%27Y%27&name_part=%27${playerName}%25%27`;
 
     try {
       const response = await axios.get(url);
-      const results = response.data.search_player_all.queryResults.row;
       let playerID = null;
-      // If multiple players with the same name, check team affiliation
-      if (results && results.length > 1) {
-        results.forEach((player) => {
-          if (player.team_abbrev === team) playerID = player.player_id;
-        });
-      } else {
+      const totalResults = response.data.search_player_all.queryResults.totalSize;
+
+      // Exact match
+      if (totalResults === 1) {
         playerID = response.data.search_player_all.queryResults.row.player_id;
       }
+
+      // Multiple matches
+      if (response.data.search_player_all.queryResults.totalSize > 1) {
+        response.data.search_player_all.queryResults.row.forEach((player) => {
+          // Match team
+          if (player.team_abbrev === team) playerID = player.player_id;
+        });
+      }
+
+      // No match
+      if (totalResults < 1) {
+        playerID = null;
+      }
+
       return playerID;
     } catch (error) {
-      console.error(`Error in MLB PlayerID lookup: ${error}`);
+      console.error(`Error in MLB PlayerID lookup of ${name} on ${team}: ${error}`);
     }
   },
 
@@ -64,7 +78,7 @@ exports.mlbComStats = {
   async playerStats(id, type, year) {
     const hitOrPitch = type === "B" ? "hitting" : "pitching";
 
-    const url = `http://lookup-service-prod.mlb.com/json/named.sport_${hitOrPitch}_tm.bam?league_list_id='mlb'&game_type='R'&season='${year}'&player_id='${id}'`;
+    const url = `https://lookup-service-prod.mlb.com/json/named.sport_${hitOrPitch}_tm.bam?league_list_id='mlb'&game_type='R'&season='${year}'&player_id='${id}'`;
     let response;
 
     if (hitOrPitch === "hitting") {
@@ -127,92 +141,100 @@ exports.mlbComStats = {
 
       // See if hitter's player ID and stats exist; if not, look them up, then store them
       const playerID = this.existingPlayerIDs[player.player_key] ? this.existingPlayerIDs[player.player_key] : await this.playerID(playerName, playerTeam);
-      const playerStats = this.existingPlayerStats[playerID] ? this.existingPlayerStats[playerID] : await this.playerStats(playerID, player.position_type, year);
-      this.existingPlayerIDs[player.player_key] = playerID;
-      this.existingPlayerStats[playerID] = playerStats;
-
-      let pitchersAverage = 0;
-      let battingAverage = 0;
-      if (player.position_type === "B") {
-        if (Array.isArray(playerStats)) {
-          playerStats.forEach((team) => {
-            battingAverage += team ? parseFloat(team.avg, 10) : LEAGUE_AVERAGE;
-          });
-        } else {
-          battingAverage = playerStats ? playerStats.avg : LEAGUE_AVERAGE;
-        }
-
-        if (opposingPitchersData[playerTeam]) pitchersAverage = opposingPitchersData[playerTeam];
-        else {
-          // If they're playing a game that day
-          if (pitchers.opponentPitchers[playerTeam]) {
-            const opposingPitcher = pitchers.opponentPitchers[playerTeam];
-
-            // If the pitcher is announced
-            if (opposingPitcher.pitcher !== "TBD") {
-              // See if opposing pitcher ID and stats exist; if not, look them up, then store them
-              const oppPitchID = this.existingPlayerIDs[opposingPitcher.pitcher + opposingPitcher.team]
-                ? this.existingPlayerIDs[opposingPitcher.pitcher + opposingPitcher.team]
-                : await this.playerID(opposingPitcher.pitcher, opposingPitcher.team);
-              const oppPitchStats = this.existingPlayerStats[opposingPitcher.pitcher + opposingPitcher.team]
-                ? this.existingPlayerStats[opposingPitcher.pitcher + opposingPitcher.team]
-                : await this.playerStats(oppPitchID, "P", year);
-              this.existingPlayerIDs[opposingPitcher.pitcher + opposingPitcher.team] = oppPitchID;
-              this.existingPlayerStats[opposingPitcher.pitcher + opposingPitcher.team] = oppPitchStats;
-
-              if (oppPitchStats) {
-                if (Array.isArray(oppPitchStats)) {
-                  oppPitchStats.forEach((team) => {
-                    pitchersAverage += parseFloat(team.ops);
-                  });
-                  pitchersAverage /= oppPitchStats.length;
-                } else {
-                  pitchersAverage = oppPitchStats.ops;
+      if (playerID) {
+        const playerStats = this.existingPlayerStats[playerID] ? this.existingPlayerStats[playerID] : await this.playerStats(playerID, player.position_type, year);
+        this.existingPlayerIDs[player.player_key] = playerID;
+        this.existingPlayerStats[playerID] = playerStats;
+  
+        let pitchersAverage = 0;
+        let battingAverage = 0;
+        if (player.position_type === "B") {
+          if (Array.isArray(playerStats)) {
+            playerStats.forEach((team) => {
+              battingAverage += team ? parseFloat(team.avg, 10) : LEAGUE_AVERAGE;
+            });
+          } else {
+            battingAverage = playerStats ? playerStats.avg : LEAGUE_AVERAGE;
+          }
+  
+          if (opposingPitchersData[playerTeam]) pitchersAverage = opposingPitchersData[playerTeam];
+          else {
+            // If they're playing a game that day
+            if (pitchers.opponentPitchers[playerTeam]) {
+              const opposingPitcher = pitchers.opponentPitchers[playerTeam];
+  
+              // If the pitcher is announced
+              if (opposingPitcher.pitcher !== "TBD") {
+                // See if opposing pitcher ID and stats exist; if not, look them up, then store them
+                const oppPitchID = this.existingPlayerIDs[opposingPitcher.pitcher + opposingPitcher.team] ? this.existingPlayerIDs[opposingPitcher.pitcher + opposingPitcher.team] : await this.playerID(opposingPitcher.pitcher, opposingPitcher.team);
+                if(oppPitchID) {
+                  const oppPitchStats = this.existingPlayerStats[opposingPitcher.pitcher + opposingPitcher.team] ? this.existingPlayerStats[opposingPitcher.pitcher + opposingPitcher.team] : await this.playerStats(oppPitchID, "P", year);
+                  this.existingPlayerIDs[opposingPitcher.pitcher + opposingPitcher.team] = oppPitchID;
+                  this.existingPlayerStats[opposingPitcher.pitcher + opposingPitcher.team] = oppPitchStats;
+                  if (oppPitchStats) {
+                    if (Array.isArray(oppPitchStats)) {
+                      oppPitchStats.forEach((team) => {
+                        pitchersAverage += parseFloat(team.ops);
+                      });
+                      pitchersAverage /= oppPitchStats.length;
+                    } else {
+                      pitchersAverage = oppPitchStats.ops;
+                    }
+                    opposingPitchersData[playerTeam] = pitchersAverage.toString();
+                  } else {
+                    opposingPitchersData[playerTeam] = LEAGUE_AVERAGE.toString();
+                  }                     
                 }
-                opposingPitchersData[playerTeam] = pitchersAverage.toString();
+
+ 
               } else {
+                pitchersAverage = LEAGUE_AVERAGE.toString();
                 opposingPitchersData[playerTeam] = LEAGUE_AVERAGE.toString();
               }
             } else {
-              pitchersAverage = LEAGUE_AVERAGE.toString();
-              opposingPitchersData[playerTeam] = LEAGUE_AVERAGE.toString();
+              pitchersAverage = "NO GAME";
+              opposingPitchersData[playerTeam] = "NO GAME";
             }
-          } else {
-            pitchersAverage = "NO GAME";
-            opposingPitchersData[playerTeam] = "NO GAME";
           }
+  
+          const logFive = pitchersAverage === "NO GAME" ? "NO GAME" : this.predictLogFive(battingAverage, pitchersAverage);
+          myHittersData[player.player_id] = {
+            logFive,
+            multiPos: !!player.display_position.includes(","),
+            name: playerName,
+            playerID,
+            playerKey: player.player_key,
+            playerStats,
+            position: player.display_position,
+            positionType: player.position_type,
+            rosterPosition: player.selected_position.position,
+            status: player.status ? player.status : null,
+            team: playerTeam,
+          };
+        } else {
+          const pitcherID = await this.playerID(playerName, playerTeam);
+          // Sometimes MLB.com doesn't have the player in their stat database, for whatever reason
+          if (pitcherID) {
+            const pitcherStats = await this.playerStats(pitcherID, "P", year);
+  
+            myPitchersData[player.player_id] = {
+              name: playerName,
+              playerID,
+              playerKey: player.player_key,
+              playerStats: pitcherStats,
+              position: player.display_position,
+              positionType: player.position_type,
+              rosterPosition: player.selected_position.position,
+              status: player.status ? player.status : null,
+              team: playerTeam,
+            };          
+          }
+  
         }
-
-        const logFive = pitchersAverage === "NO GAME" ? "NO GAME" : this.predictLogFive(battingAverage, pitchersAverage);
-        myHittersData[player.player_id] = {
-          logFive,
-          multiPos: !!player.display_position.includes(","),
-          name: playerName,
-          playerID,
-          playerKey: player.player_key,
-          playerStats,
-          position: player.display_position,
-          positionType: player.position_type,
-          rosterPosition: player.selected_position.position,
-          status: player.status ? player.status : null,
-          team: playerTeam,
-        };
       } else {
-        const pitcherID = await this.playerID(playerName, playerTeam);
-        const pitcherStats = await this.playerStats(pitcherID, "P", year);
-
-        myPitchersData[player.player_id] = {
-          name: playerName,
-          playerID,
-          playerKey: player.player_key,
-          playerStats: pitcherStats,
-          position: player.display_position,
-          positionType: player.position_type,
-          rosterPosition: player.selected_position.position,
-          status: player.status ? player.status : null,
-          team: playerTeam,
-        };
+        console.log(`No player stats for ${playerName}`);
       }
+ 
     });
     process.stdout.write("\n");
     this.writeToFile(JSON.stringify(this.existingPlayerIDs), playerIDsFile, "w");

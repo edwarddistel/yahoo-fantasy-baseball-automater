@@ -11,6 +11,7 @@ To run that and only that function `npm run closers`.
 ## Installation
 You'll need 3 values from Yahoo to start -- I have a detailed guide here in my [Yahoo Fantasy Baseball Reader](https://github.com/edwarddistel/yahoo-fantasy-baseball-reader).
 
+You'll also need to use the Node version specified in the `.nvmrc` file by running `nvm use`. ([Details](https://github.com/nvm-sh/nvm))
 
 ## Logic
 

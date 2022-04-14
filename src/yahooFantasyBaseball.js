@@ -312,8 +312,13 @@ exports.yfbb = {
   async getPlayer(player) {
     try {
       const results = await this.makeAPIrequest(this.playerSearch() + player);
-      return results.fantasy_content.league.players.player.player_key;
+      let result = null;
+      if (Object.keys(results.fantasy_content.league.players).length > 0) {
+        result = results.fantasy_content.league.players.player.player_key;
+      }
+      return result;
     } catch (err) {
+      console.log("Player with a problem: ", player);
       this.handleError(err, "getPlayer");
     }
   },

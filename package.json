@@ -19,7 +19,7 @@
   "author": "Edward Distel",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.27.0",
+    "axios": "^0.27.1",
     "js2xmlparser": "^4.0.2",
     "parser": "^0.1.4",
     "qs": "^6.10.3",

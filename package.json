@@ -20,7 +20,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^1.2.2",
-    "js2xmlparser": "^4.0.2",
+    "js2xmlparser": "^5.0.0",
     "parser": "^0.1.4",
     "qs": "^6.11.0",
     "x-ray": "^2.3.4",
